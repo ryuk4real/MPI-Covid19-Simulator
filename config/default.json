@@ -2,19 +2,27 @@
 
     "numberOfGenerations": 500,
 
-    "displayGenerationsOnScreen": 0,
+    "matrixSize": 150,
 
-    "matrixSize": 300,
+    "squareSize": 5,
+
+    "vaccinationPercentage": 20,
+
+    "infectionPercentage": 5,
+
+    "immunityPercentage": 5,
+
+    "deathPercentage": 10,
 
     "defaultPersonColor": [255,255,255],
 
     "immuneColor": [0,0,255],
 
-    "infectedColor": [255,0,0],
+    "infectedColor": [0,255,0],
     
     "deadColor": [0,0,0],
 
-    "vaccinatedColor": [0,255,0],
+    "vaccinatedColor": [0,0,255],
 
     "millisecondsToWaitForEachGeneration": 0
 
