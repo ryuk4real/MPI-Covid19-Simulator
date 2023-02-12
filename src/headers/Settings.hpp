@@ -18,6 +18,16 @@ class Settings
 
         int matrixSize;
 
+        int squareSize;
+
+        int vaccinationPercentage;
+
+        int infectionPercentage;
+
+        int immunityPercentage;
+
+        int deathPercentage;
+
         rgb defaultPersonColor;
 
         rgb immuneColor;
@@ -39,7 +49,17 @@ class Settings
 
         int getNumberOfGenerations() const {return this->numberOfGenerations;}
 
+        int getSquareSize() const {return this->squareSize;}
+
         int getMatrixSize() const {return this->matrixSize;}
+
+        int getVaccinationPercentage() const {return this->vaccinationPercentage;}
+
+        int getInfectionPercentage() const {return this->infectionPercentage;}
+
+        int getImmunityPercentage() const {return this->immunityPercentage;}
+
+        int getDeathPercentage() const {return this->deathPercentage;}
 
         rgb getDefaultPersonColor() const {return this->defaultPersonColor;}
 
@@ -65,7 +85,7 @@ Settings::Settings()
 {
 
     // Read json settings file -------------------------------------------------------------------------
-    std::ifstream settings("src/settings/settings.json");
+    std::ifstream settings("config/default.json");
 
     if(!settings){ throw std::runtime_error("ERROR: Couldn't open/find settings.json file"); }
     
@@ -76,6 +96,16 @@ Settings::Settings()
     numberOfGenerations = checkPositive(jsonSettings["numberOfGenerations"]);
 
     matrixSize = checkPositive(jsonSettings["matrixSize"]);
+
+    squareSize = checkPositive(jsonSettings["squareSize"]);
+
+    vaccinationPercentage = checkPositive(jsonSettings["vaccinationPercentage"]);
+
+    infectionPercentage = checkPositive(jsonSettings["infectionPercentage"]);
+
+    immunityPercentage = checkPositive(jsonSettings["immunityPercentage"]);
+
+    deathPercentage = checkPositive(jsonSettings["deathPercentage"]);
 
     defaultPersonColor.r = checkRGBValue(jsonSettings["defaultPersonColor"][0]);
     defaultPersonColor.g = checkRGBValue(jsonSettings["defaultPersonColor"][1]);
