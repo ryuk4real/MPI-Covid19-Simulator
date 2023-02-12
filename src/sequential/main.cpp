@@ -39,7 +39,6 @@ int millisecondsToWaitForEachGeneration = settings.getMillisecodsToWaitForEachGe
 Person * readMatrix = new Person[settings.getMatrixSize() * settings.getMatrixSize()];
 Person * writeMatrix = new Person[settings.getMatrixSize() * settings.getMatrixSize()];
 
-
 #ifdef usingGraphics
 
     ALLEGRO_DISPLAY * display;
@@ -162,7 +161,8 @@ void update()
                     if(k != 0 || l != 0)
                     {
                         // if the neighbour is infected
-                        if(readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.isInfected == 1)
+                        if(readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.isInfected == true &&
+                           readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.daysOfIncubation >= 2)
                         {
                             infectedNeighbours++;
                         }
@@ -173,10 +173,74 @@ void update()
             // copy the person to the write matrix
             writeMatrix[m(i,j)] = readMatrix[m(i,j)];
 
-            if (rand()%100 < infectionPercentage / infectedNeighbours)
+            if (readMatrix[m(i,j)].values.isDead || readMatrix[m(i,j)].values.isVaccinated)
+                continue;
+            
+            // if the person is infected
+            if (readMatrix[m(i,j)].values.isInfected && !readMatrix[(i,j)].values.isImmune)
             {
-                writeMatrix[m(i,j)].values.isInfected = 1;
+
+                if (readMatrix[m(i,j)].values.daysOfIncubation < 3)
+                {
+                    writeMatrix[m(i,j)].values.daysOfIncubation++;
+                    continue;
+                }
+                
+                if (readMatrix[m(i,j)].values.daysOfInfection < 7)
+                {
+                    writeMatrix[m(i,j)].values.daysOfInfection++;
+                }
+                else if (rand()%100 < immunityPercentage)
+                {
+                    writeMatrix[m(i,j)].values.isInfected = false;
+                    writeMatrix[m(i,j)].values.isImmune = true;
+                }
+                
+                if (readMatrix[m(i,j)].values.age >= 65)
+                {
+                    if (rand()%100 < deathPercentage)
+                    {
+                        writeMatrix[m(i,j)].values.isInfected = false;
+                        writeMatrix[m(i,j)].values.isDead = true;
+                    }
+                }
+                else if (readMatrix[m(i,j)].values.age > 25 && readMatrix[m(i,j)].values.age < 65)
+                {
+                    if (rand()%100 < deathPercentage / 2)
+                    {
+                        writeMatrix[m(i,j)].values.isInfected = false;
+                        writeMatrix[m(i,j)].values.isDead = true;
+                    }
+                }
+                else
+                {
+                    if (rand()%100 < deathPercentage / 4)
+                    {
+                        writeMatrix[m(i,j)].values.isInfected = false;
+                        writeMatrix[m(i,j)].values.isDead = true;
+                    }
+                }
             }
+            else // if the person is not infected
+            {
+                if (infectedNeighbours > 0 &&
+                    rand()%100 < infectionPercentage * infectedNeighbours &&
+                    readMatrix[m(i,j)].values.isImmune == false)
+                {
+                    writeMatrix[m(i,j)].values.isInfected = true;
+                }
+
+                if (rand()%10000 < vaccinationPercentage)
+                {
+                    writeMatrix[m(i,j)].values.isVaccinated = true;
+                }
+
+                if(rand()%100 < 2)
+                {
+                    writeMatrix[m(i,j)].values.isImmune = false;
+                }
+            }
+
 
         }
     }
@@ -213,10 +277,13 @@ void draw()
             {
                 al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, vaccinatedColor);
             }
-            else
+            else 
             {
                 al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, defaultPersonColor);
             }
+
+            // add black layer that scales with person age
+            al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, al_map_rgba(0, 0, 0, readMatrix[m(i,j)].values.age));
         }
     }
 

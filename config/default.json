@@ -6,23 +6,23 @@
 
     "squareSize": 5,
 
-    "vaccinationPercentage": 20,
+    "vaccinationPercentage": 1,
 
-    "infectionPercentage": 5,
+    "infectionPercentage": 3,
 
-    "immunityPercentage": 5,
+    "immunityPercentage": 1,
 
-    "deathPercentage": 10,
+    "deathPercentage": 5,
 
     "defaultPersonColor": [255,255,255],
 
-    "immuneColor": [0,0,255],
+    "immuneColor": [0,100,255],
 
     "infectedColor": [0,255,0],
     
-    "deadColor": [0,0,0],
+    "deadColor": [0,95,55],
 
-    "vaccinatedColor": [0,0,255],
+    "vaccinatedColor": [0,120,120],
 
     "millisecondsToWaitForEachGeneration": 0
 
