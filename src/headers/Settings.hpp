@@ -26,9 +26,13 @@ class Settings
 
         int immunityPercentage;
 
+        int loseImmunityPercentage;
+
         int deathPercentage;
 
         rgb defaultPersonColor;
+
+        rgb incubationColor;
 
         rgb immuneColor;
 
@@ -59,9 +63,13 @@ class Settings
 
         int getImmunityPercentage() const {return this->immunityPercentage;}
 
+        int getLoseImmunityPercentage() const {return this->loseImmunityPercentage;}
+
         int getDeathPercentage() const {return this->deathPercentage;}
 
         rgb getDefaultPersonColor() const {return this->defaultPersonColor;}
+
+        rgb getIncubationColor() const {return this->incubationColor;}
 
         rgb getImmuneColor() const {return this->immuneColor;}
 
@@ -105,11 +113,17 @@ Settings::Settings()
 
     immunityPercentage = checkPositive(jsonSettings["immunityPercentage"]);
 
+    loseImmunityPercentage = checkPositive(jsonSettings["loseImmunityPercentage"]);
+
     deathPercentage = checkPositive(jsonSettings["deathPercentage"]);
 
     defaultPersonColor.r = checkRGBValue(jsonSettings["defaultPersonColor"][0]);
     defaultPersonColor.g = checkRGBValue(jsonSettings["defaultPersonColor"][1]);
     defaultPersonColor.b = checkRGBValue(jsonSettings["defaultPersonColor"][2]);
+
+    incubationColor.r = checkRGBValue(jsonSettings["incubationColor"][0]);
+    incubationColor.g = checkRGBValue(jsonSettings["incubationColor"][1]);
+    incubationColor.b = checkRGBValue(jsonSettings["incubationColor"][2]);
 
     immuneColor.r = checkRGBValue(jsonSettings["immuneColor"][0]);
     immuneColor.g = checkRGBValue(jsonSettings["immuneColor"][1]);

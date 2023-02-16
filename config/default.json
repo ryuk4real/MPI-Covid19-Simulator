@@ -1,8 +1,8 @@
 {
 
-    "numberOfGenerations": 500,
+    "numberOfGenerations": 10000,
 
-    "matrixSize": 150,
+    "matrixSize": 120,
 
     "squareSize": 5,
 
@@ -12,18 +12,22 @@
 
     "immunityPercentage": 1,
 
-    "deathPercentage": 5,
+    "loseImmunityPercentage": 1,
+
+    "deathPercentage": 2,
 
     "defaultPersonColor": [255,255,255],
 
     "immuneColor": [0,100,255],
 
-    "infectedColor": [0,255,0],
+    "infectedColor": [41,212,0],
+
+    "incubationColor": [255,220,27],
     
     "deadColor": [0,95,55],
 
-    "vaccinatedColor": [0,120,120],
+    "vaccinatedColor": [160,176,255],
 
-    "millisecondsToWaitForEachGeneration": 0
+    "millisecondsToWaitForEachGeneration": 1
 
 }

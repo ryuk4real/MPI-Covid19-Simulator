@@ -31,6 +31,7 @@ int numberOfGenerations = settings.getNumberOfGenerations();
 
 int infectionPercentage = settings.getInfectionPercentage();
 int immunityPercentage = settings.getImmunityPercentage();
+int loseImmunityPercentage = settings.getLoseImmunityPercentage();
 int vaccinationPercentage = settings.getVaccinationPercentage();
 int deathPercentage = settings.getDeathPercentage();
 
@@ -45,12 +46,14 @@ Person * writeMatrix = new Person[settings.getMatrixSize() * settings.getMatrixS
 
     rgb infectedRGBColor = settings.getInfectedColor();
     rgb immuneRGBColor = settings.getImmuneColor();
+    rgb incubationRGBColor = settings.getIncubationColor();
     rgb deadRGBColor = settings.getDeadColor();
     rgb vaccinatedRGBColor = settings.getVaccinatedColor();
     rgb defaultPersonRGBColor = settings.getDefaultPersonColor();
 
     ALLEGRO_COLOR infectedColor = al_map_rgb(infectedRGBColor.r, infectedRGBColor.g, infectedRGBColor.b);
     ALLEGRO_COLOR immuneColor = al_map_rgb(immuneRGBColor.r, immuneRGBColor.g, immuneRGBColor.b);
+    ALLEGRO_COLOR incubationColor = al_map_rgb(incubationRGBColor.r, incubationRGBColor.g, incubationRGBColor.b);
     ALLEGRO_COLOR deadColor = al_map_rgb(deadRGBColor.r, deadRGBColor.g, deadRGBColor.b);
     ALLEGRO_COLOR vaccinatedColor = al_map_rgb(vaccinatedRGBColor.r, vaccinatedRGBColor.g, vaccinatedRGBColor.b);
     ALLEGRO_COLOR defaultPersonColor = al_map_rgb(defaultPersonRGBColor.r, defaultPersonRGBColor.g, defaultPersonRGBColor.b);
@@ -152,6 +155,7 @@ void update()
         for(int j = 0; j < cols; j++)
         {
             short infectedNeighbours = 0;
+            short vaccinatedNeighbours = 0;
 
             for(int k = -1; k <= 1; k++)
             {
@@ -164,7 +168,13 @@ void update()
                         if(readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.isInfected == true &&
                            readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.daysOfIncubation >= 2)
                         {
-                            infectedNeighbours++;
+                            ++infectedNeighbours;
+                        }
+
+                        // if the neighbour is vaccinated
+                        if(readMatrix[m((i + k + rows) % rows, ((j + l + cols) % cols))].values.isVaccinated == true)
+                        {
+                            ++vaccinatedNeighbours;
                         }
                     }
                 }
@@ -182,13 +192,14 @@ void update()
 
                 if (readMatrix[m(i,j)].values.daysOfIncubation < 3)
                 {
-                    writeMatrix[m(i,j)].values.daysOfIncubation++;
+                    ++writeMatrix[m(i,j)].values.daysOfIncubation;
                     continue;
                 }
                 
                 if (readMatrix[m(i,j)].values.daysOfInfection < 7)
                 {
-                    writeMatrix[m(i,j)].values.daysOfInfection++;
+                    writeMatrix[m(i,j)].values.daysOfIncubation = 0;
+                    ++writeMatrix[m(i,j)].values.daysOfInfection;
                 }
                 else if (rand()%100 < immunityPercentage)
                 {
@@ -228,20 +239,28 @@ void update()
                     readMatrix[m(i,j)].values.isImmune == false)
                 {
                     writeMatrix[m(i,j)].values.isInfected = true;
+                    continue;
                 }
 
-                if (rand()%10000 < vaccinationPercentage)
+                if (rand()%100000 < vaccinationPercentage)
                 {
                     writeMatrix[m(i,j)].values.isVaccinated = true;
+                    continue;
                 }
 
-                if(rand()%100 < 2)
+                if (vaccinatedNeighbours > 0 &&
+                    rand()%250 < vaccinationPercentage * vaccinatedNeighbours)
+                {
+                    writeMatrix[m(i,j)].values.isVaccinated = true;
+                    continue;
+                }
+
+                if(rand()%100 < loseImmunityPercentage)
                 {
                     writeMatrix[m(i,j)].values.isImmune = false;
+                    continue;
                 }
             }
-
-
         }
     }
 }
@@ -257,11 +276,15 @@ void draw()
 {
     al_clear_to_color(defaultPersonColor);
 
-    for (int i = 0; i < rows; ++i)
+    for (int j = 0; j < rows; ++j)
     {
-        for (int j = 0; j < cols; ++j)
+        for (int i = 0; i < cols; ++i)
         {
-            if (readMatrix[m(i,j)].values.isInfected)
+            if (readMatrix[m(i,j)].values.isInfected && readMatrix[m(i,j)].values.daysOfIncubation < 3)
+            {
+                al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, incubationColor);
+            }
+            else if (readMatrix[m(i,j)].values.isInfected)
             {
                 al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, infectedColor);
             }
