@@ -1,8 +1,8 @@
 {
 
-    "numberOfGenerations": 10000,
+    "numberOfGenerations": 100,
 
-    "matrixSize": 120,
+    "matrixSize": 300,
 
     "squareSize": 5,
 
@@ -28,6 +28,6 @@
 
     "vaccinatedColor": [160,176,255],
 
-    "millisecondsToWaitForEachGeneration": 1
+    "millisecondsToWaitForEachGeneration": 0
 
 }

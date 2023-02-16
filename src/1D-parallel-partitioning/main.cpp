@@ -3,8 +3,8 @@
 #include <mpich/mpi.h>
 #include "../headers/Settings.hpp"
 
-#define debug
-#define usingGraphics
+//#define debug
+//#define usingGraphics
 
 union Person {
 	struct {
@@ -22,7 +22,7 @@ union Person {
 
 Settings settings = Settings();
 
-#define procs 4
+#define procs 1
 #define root 0
 
 int rows = settings.getMatrixSize();
@@ -43,8 +43,7 @@ int millisecondsToWaitForEachGeneration = settings.getMillisecodsToWaitForEachGe
 Person * readMatrix = new Person[rows * ((cols / procs) + 2)];
 Person * writeMatrix = new Person[rows * ((cols / procs) + 2)];
 
-int rank, left, right;
-int rankLeft, rankRight;
+int rank, left, right, size;
 
 
 inline void initialize();
@@ -71,6 +70,7 @@ inline void update();
 inline void updateBorders();
 inline void draw(Person * readMatrix);
 inline void swap();
+inline void finalize();
 
 inline int m(int i, int j) {return j * rows + i;}
 
@@ -81,7 +81,6 @@ inline int m(int i, int j) {return j * rows + i;}
 
 int main(int argc, char * argv[])
 {
-    int size;
     int source, dest;
     double elapsedTime;
 
@@ -94,22 +93,11 @@ int main(int argc, char * argv[])
     MPI_Type_contiguous(rows, MPI_UNSIGNED_SHORT, &columnType);
     MPI_Type_commit(&columnType);
 
-    #ifdef usingGraphics
-        MPI_Type_contiguous(rows * cols, MPI_UNSIGNED_SHORT, &subMatrixType);
-        MPI_Type_commit(&subMatrixType);
-    #endif // usingGraphics
-
     int dims[1] = {size};
     int periods[1] = {1};
 
     MPI_Cart_create(MPI_COMM_WORLD, 1, dims, periods, 0, &comm);
     MPI_Cart_shift(comm, 0, 1, &left, &right);
-
-    const int leftCords[] = {0};
-    const int rightCords[] = {procs - 1};
-
-    MPI_Cart_rank(comm, leftCords, &rankLeft);
-    MPI_Cart_rank(comm, rightCords, &rankRight);
 
     #ifdef usingGraphics
 
@@ -143,13 +131,15 @@ int main(int argc, char * argv[])
 
     for (int i = 1; i <= numberOfGenerations; ++i)
     {
-        if (rank == root)
-            printf("Generation %d\n", i);
+        #ifdef debug
+            if (rank == root)
+                printf("Generation %d\n", i);
+        #endif // debug
         
+        #ifdef usingGraphics
         MPI_Request request;
         MPI_Isend(&readMatrix[m(0, 2)], cols/procs*2, columnType, root, 0, comm, &request);
 
-        #ifdef usingGraphics
             /* Person * buffer = &readMatrix[m(0,1)];
             MPI_Gather(buffer, 1, subMatrixType, wholeMatrix, 1, subMatrixType, root, comm); */
 
@@ -168,10 +158,11 @@ int main(int argc, char * argv[])
         receiveBorders();
         updateBorders();
 
-       swap();
+        swap();
 
-       MPI_Barrier(comm);
+        MPI_Barrier(comm);
 
+        sleep(millisecondsToWaitForEachGeneration);
     }
 
     MPI_Barrier(comm);
@@ -182,25 +173,18 @@ int main(int argc, char * argv[])
         printf("Elapsed time: %f\n", elapsedTime);
     }
 
-    MPI_Type_free(&columnType);
-
     #ifdef usingGraphics
 
     if (rank == root)
     {
         delete [] wholeMatrix;
         al_destroy_display(display);
-        al_uninstall_system();
     }
-    
-    MPI_Type_free(&subMatrixType);
 
     #endif // usingGraphics
 
-    delete [] readMatrix;
-    delete [] writeMatrix;
-
-    MPI_Finalize();
+    
+    finalize();
 
     return 0;
 }
@@ -220,25 +204,46 @@ int main(int argc, char * argv[])
 
 
 
-void initialize()
+inline void initialize()
 {
     for (int i = 0; i < rows; ++i)
     {
-        for (int j = 1; j < cols / procs + 1; ++j)
+        for (int j = 1; j < cols / procs + 3; ++j)
         {
             readMatrix[m(i,j)].values.age = rand() % 100;
         }
     }
-    
-    if (rank == procs / 2)
-        readMatrix[m(rows/2, cols/procs-2)].values.isInfected = 1;
+
+    if (size == 1) readMatrix[m(rows/2, cols/2)].values.isInfected = 1;
+    else
+    {
+        int centerRank = size / 2;
+
+        if (rank == centerRank)
+        {   
+            if (size % 2 == 0)
+            {
+                readMatrix[m(rows/2, 2)].values.isInfected = 1;
+            }
+            else
+            {
+                readMatrix[m(rows/2, cols/procs/2)].values.isInfected = 1;
+            }
+        }
+    }
 }
 
-void update()
+inline void finalize()
+{
+    MPI_Type_free(&columnType);
+    MPI_Finalize();
+}
+
+inline void update()
 {
     for(int i = 0; i < rows; i++)
     {
-        for(int j = 2; j < cols/procs + 1; j++)
+        for(int j = 2; j < cols/procs; j++)
         {
             short infectedNeighbours = 0;
             short vaccinatedNeighbours = 0;
@@ -351,7 +356,7 @@ void update()
     }
 }
 
-void updateBorders()
+inline void updateBorders()
 {
     for(int i = 0; i < rows; i++)
     {
@@ -360,9 +365,9 @@ void updateBorders()
             short infectedNeighbours = 0;
             short vaccinatedNeighbours = 0;
 
-            for(int k = -1; k <= 1; k++)
+            for(int k = -1; k <= 1; ++k)
             {
-                for(int l = -1; l <= 1; l++)
+                for(int l = -1; l <= 1; ++l)
                 {
                     // if the neighbour is not the person itself
                     if(k != 0 || l != 0)
@@ -468,27 +473,28 @@ void updateBorders()
     }
 }
 
-void sendBorders()
+inline void sendBorders()
 {
     MPI_Request request;
 
     // send column to the left
-    MPI_Isend(&readMatrix[m(0, 2)], 1, columnType, left, 0, comm, &request);
+    MPI_Isend(&readMatrix[m(0, 1)], 2, columnType, left, 0, comm, &request);
 
     // send column to the right
-    MPI_Isend(&readMatrix[m(0, cols/procs)], 1, columnType, right, 1, comm, &request);
+    MPI_Isend(&readMatrix[m(0, cols/procs)], 2, columnType, right, 1, comm, &request);
 }
 
-void receiveBorders()
+inline void receiveBorders()
 {
     // receive column from the left
-    MPI_Recv(&readMatrix[m(0, 0)], 1, columnType, left, 1, comm, MPI_STATUS_IGNORE);
+    MPI_Recv(&readMatrix[m(0, 0)], 2, columnType, left, 1, comm, MPI_STATUS_IGNORE);
 
     // receive column from the right
-    MPI_Recv(&readMatrix[m(0, cols/procs + 2)], 1, columnType, right, 0, comm, MPI_STATUS_IGNORE);
+    MPI_Recv(&readMatrix[m(0, cols/procs + 1)], 2, columnType, right, 0, comm, MPI_STATUS_IGNORE);
 }
 
-void draw(Person * readMatrix)
+#ifdef usingGraphics
+inline void draw(Person * readMatrix)
 {
     al_clear_to_color(defaultPersonColor);
 
@@ -528,6 +534,7 @@ void draw(Person * readMatrix)
 
     al_flip_display();
 }
+#endif //usingGraphics
 
 inline void swap()
 {
