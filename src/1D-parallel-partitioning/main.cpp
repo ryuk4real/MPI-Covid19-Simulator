@@ -3,7 +3,7 @@
 #include <mpich/mpi.h>
 #include "../headers/Settings.hpp"
 
-//#define debug
+#define debug
 //#define usingGraphics
 
 union Person {
@@ -22,7 +22,7 @@ union Person {
 
 Settings settings = Settings();
 
-#define procs 1
+#define procs 4
 #define root 0
 
 int rows = settings.getMatrixSize();

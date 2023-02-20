@@ -1,8 +1,8 @@
 {
 
-    "numberOfGenerations": 100,
+    "numberOfGenerations": 1000,
 
-    "matrixSize": 300,
+    "matrixSize": 120,
 
     "squareSize": 5,
 

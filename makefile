@@ -3,7 +3,7 @@ FLAGS = -O3 -std=c++17 -I/usr/include/allegro5 -L/usr/lib -lallegro -lallegro_pr
 
 
 
-all: sequential 1Dparallel 2Dparallel
+all: 2Dparallel
 
 sequential: 
 	$(CC) src/sequential/main.cpp -O3 -o bin/COVID19-serial.out $(FLAGS)
