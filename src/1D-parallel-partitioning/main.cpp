@@ -4,7 +4,7 @@
 #include "../headers/Settings.hpp"
 
 #define debug
-//#define usingGraphics
+#define usingGraphics
 
 union Person {
 	struct {
@@ -22,7 +22,7 @@ union Person {
 
 Settings settings = Settings();
 
-#define procs 4
+#define procs 6
 #define root 0
 
 int rows = settings.getMatrixSize();
@@ -152,7 +152,7 @@ int main(int argc, char * argv[])
             }
 
         #endif // usingGraphics
-
+        
         sendBorders();
         update();
         receiveBorders();
@@ -170,7 +170,28 @@ int main(int argc, char * argv[])
     if (rank == root)
     {
         elapsedTime = MPI_Wtime() - elapsedTime;
-        printf("Elapsed time: %f\n", elapsedTime);
+        printf("Elapsed time: %3.3f seconds\n", elapsedTime);
+
+        if (size > 1)
+        {
+            // speed-up
+            double speedUp = 2.350 / elapsedTime;
+            printf("Speed-up: %3.3f\n", speedUp);
+
+            // efficiency
+            double efficiency = speedUp / (double) procs;
+            printf("Efficiency: %3.3f\n", efficiency);
+        }
+        else
+        {
+            // speed-up
+            double speedUp = 1;
+            printf("Speed-up: %3.3f\n", speedUp);
+
+            // efficiency
+            double efficiency = speedUp / (double) procs;
+            printf("Efficiency: %3.3f", efficiency);
+        }
     }
 
     #ifdef usingGraphics
@@ -188,21 +209,6 @@ int main(int argc, char * argv[])
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 inline void initialize()
 {
@@ -235,7 +241,6 @@ inline void initialize()
 
 inline void finalize()
 {
-    MPI_Type_free(&columnType);
     MPI_Finalize();
 }
 
@@ -308,7 +313,7 @@ inline void update()
                 }
                 else if (readMatrix[m(i,j)].values.age > 25 && readMatrix[m(i,j)].values.age < 65)
                 {
-                    if (rand()%100 < deathPercentage / 2)
+                    if (rand()%200 < deathPercentage)
                     {
                         writeMatrix[m(i,j)].values.isInfected = false;
                         writeMatrix[m(i,j)].values.isDead = true;
@@ -316,7 +321,7 @@ inline void update()
                 }
                 else
                 {
-                    if (rand()%100 < deathPercentage / 4)
+                    if (rand()%400 < deathPercentage / 4)
                     {
                         writeMatrix[m(i,j)].values.isInfected = false;
                         writeMatrix[m(i,j)].values.isDead = true;
@@ -531,6 +536,13 @@ inline void draw(Person * readMatrix)
             al_draw_filled_rectangle(j * square, i * square, (j + 1) * square, (i + 1) * square, al_map_rgba(0, 0, 0, readMatrix[m(i,j)].values.age));
         }
     }
+
+    /* // draw a grid with procs columns
+    for (int i = 0; i < procs; ++i)
+    {
+        al_draw_line(i * cols/procs * square, 0, i * cols/procs * square, rows * square, al_map_rgb(255, 0, 0), 2);
+    } */
+
 
     al_flip_display();
 }
